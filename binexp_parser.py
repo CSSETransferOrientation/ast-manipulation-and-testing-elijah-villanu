@@ -10,6 +10,32 @@ from enum import Enum
 # distinguish between the addition and multiplication operators
 NodeType = Enum('BinOpNodeType', ['number', 'operator'])
 
+
+class TestBench(unittest.TestCase):
+    testDir = [osjoin('testbench','arith_id'), osjoin('testbench','mult_id'), 
+            osjoin('testbench','mult_by_zero'),osjoin('testbench','combined')]
+    def test(self):
+        for testType in self.testDir:
+            inputDir = osjoin(testType, 'inputs')
+            outputDir = osjoin(testType, 'outputs')
+            for file in os.listdir(outputDir):
+                ins = osjoin(inputDir, file)
+                outs = osjoin(outputDir, file)        #Mirrored input output filename
+
+                with open(ins) as r:
+                    inputValue = r.read().split()
+                with open(outs) as r:
+                    outputValue = r.read()
+                with self.subTest(msg = "Test " + str(file), inputValue = inputValue, outputValue = outputValue):
+                    current = BinOpAst(inputValue)
+                    current.simplify_binops()
+                    ans = current.prefix_str()
+                    self.assertEqual(ans, outputValue) #Tests two values are equal    
+
+        
+
+
+
 class BinOpAst():
     """
     A somewhat quick and dirty structure to represent a binary operator AST.
@@ -51,11 +77,16 @@ class BinOpAst():
         Convert the BinOpAst to a prefix notation string.
         Make use of new Python 3.10 case!
         """
+        # if self == False:
         match self.type:
             case NodeType.number:
-                return self.val
+                return str(self.val)
             case NodeType.operator:
-                return self.val + ' ' + self.left.prefix_str() + ' ' + self.right.prefix_str()
+                if self.right == False or self.left == False:
+                    return str(self.val)
+                else:
+                    return str(self.val) + ' ' + self.left.prefix_str() + ' ' + self.right.prefix_str()
+            
 
     def infix_str(self):
         """
@@ -74,7 +105,7 @@ class BinOpAst():
         """
         match self.type:
             case NodeType.number:
-                return self.val
+                return str(self.val)
             case NodeType.operator:
                 return self.left.postfix_str() + ' ' + self.right.postfix_str() + ' ' + self.val
 
@@ -83,6 +114,20 @@ class BinOpAst():
         Reduce additive identities
         x + 0 = x
         """
+        # In prefix: + x 0 simplify to x
+        if self.right == False:                 #Base case once last number reached
+            return
+        if self.type == NodeType.operator:      #Instead change to node type is operator 
+            self.right.additive_identity()      #Will reach from the bottom
+        if self.val == '+':
+            if self.right.val == '0':
+                self.val = self.left.val
+                self.right = False
+                self.left = False
+            elif self.left.val == '0':
+                self.val = self.right.val            
+                self.right = False
+                self.left = False    
         # IMPLEMENT ME!
         pass
                         
@@ -91,6 +136,19 @@ class BinOpAst():
         Reduce multiplicative identities
         x * 1 = x
         """
+        if self.right == False:
+            return
+        if self.type == NodeType.operator:      
+            self.right.multiplicative_identity()  
+        if self.val == '*':
+            if self.right.val == '1':
+                self.val = self.left.val
+                self.right = False
+                self.left = False
+            elif self.left.val == '1':
+                self.val = self.right.val            
+                self.right = False
+                self.left = False    
         # IMPLEMENT ME!
         pass
     
@@ -100,6 +158,15 @@ class BinOpAst():
         Reduce multiplication by zero
         x * 0 = 0
         """
+        if self.right == False: 
+            return
+        if self.type == NodeType.operator:     
+            self.right.mult_by_zero()  
+        if self.val == '*':
+            if self.right.val == '0' or self.left.val == '0':
+                self.val = '0'
+                self.right = False
+                self.left = False 
         # Optionally, IMPLEMENT ME! (I'm pretty easy)
         pass
     
@@ -122,11 +189,24 @@ class BinOpAst():
         3) Extra #1: Multiplication by 0, e.g. x * 0 = 0
         4) Extra #2: Constant folding, e.g. statically we can reduce 1 + 1 to 2, but not x + 1 to anything
         """
+        self.mult_by_zero()
         self.additive_identity()
         self.multiplicative_identity()
-        self.mult_by_zero()
         self.constant_fold()
 
+        # Run through identites again to further simplify
+
+        self.mult_by_zero()
+        self.additive_identity()
+        self.multiplicative_identity()
+        self.constant_fold()
+
+
+# test = BinOpAst(['+','5', '0'])
+# print(test)
+# test.simplify_binops()
+# stre = test.prefix_str()
+# print(str)
 
 if __name__ == "__main__":
     unittest.main()
