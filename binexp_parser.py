@@ -11,9 +11,13 @@ from enum import Enum
 NodeType = Enum('BinOpNodeType', ['number', 'operator'])
 
 
+# ;;> You should really have one of these for each of the different tests as
+# ;;> you are testing all of the functions by only using simplify_binops
+# ;;> I'm going to change this to just test additive_id to try to debug
 class TestBench(unittest.TestCase):
-    testDir = [osjoin('testbench','arith_id'), osjoin('testbench','mult_id'), 
-            osjoin('testbench','mult_by_zero'),osjoin('testbench','combined')]
+#    testDir = [osjoin('testbench','arith_id'), osjoin('testbench','mult_id'), 
+#            osjoin('testbench','mult_by_zero'),osjoin('testbench','combined')]
+    testDir = [osjoin('testbench', 'arith_id')]
     def test(self):
         for testType in self.testDir:
             inputDir = osjoin(testType, 'inputs')
@@ -28,7 +32,7 @@ class TestBench(unittest.TestCase):
                     outputValue = r.read()
                 with self.subTest(msg = "Test " + str(file), inputValue = inputValue, outputValue = outputValue):
                     current = BinOpAst(inputValue)
-                    current.simplify_binops()
+                    current.additive_identity()
                     ans = current.prefix_str()
                     self.assertEqual(ans, outputValue) #Tests two values are equal    
 
@@ -115,8 +119,11 @@ class BinOpAst():
         x + 0 = x
         """
         # In prefix: + x 0 simplify to x
+        # ;;> You really just want to check if self is a number and return as the base ase
         if self.right == False:                 #Base case once last number reached
             return
+        # ;;> ah so some of your weirdness is coming from this, you should
+        # ;;> also recur on the left side
         if self.type == NodeType.operator:      #Instead change to node type is operator 
             self.right.additive_identity()      #Will reach from the bottom
         if self.val == '+':
@@ -136,6 +143,7 @@ class BinOpAst():
         Reduce multiplicative identities
         x * 1 = x
         """
+        # ;;> Same weirdness here
         if self.right == False:
             return
         if self.type == NodeType.operator:      

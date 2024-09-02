@@ -6,3 +6,6 @@
 
  ### Difficult Bug
    The biggest issues I ran into, as probably seen by running the code, is that I was not able to get the test bench to work. As mentioned before, my identities work with certain test cases, but I am only aware of it's functionality through the old ways of testing (simple printing as seen as a commented out block of code all the way down). The errors unittest was throwing out was with how I was using the file to initialize the BinOpAst class (line 30). As of now, I am unsure how to resolve this. 
+
+;;> So there looks like there are some errors in your tests, which was probably confusing you. However, you should really test one thing at a time to narrow down the potential issues. See your code for more comments.
+;;> Overall this was a great start and you had it most of the way there!
